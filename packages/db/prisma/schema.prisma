@@ -1,0 +1,497 @@
+// This is the Prisma schema for the AI Education Platform
+// Based on the database architecture documented in obsidian-vault/08_Database/
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum Semester {
+  FIRST
+  SECOND
+}
+
+enum CourseType {
+  MATH
+}
+
+enum LevelStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+  MASTERED
+}
+
+enum AssessmentType {
+  INITIAL
+  LEVEL_TEST
+  PRACTICE
+  MOCK
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  FILL_BLANK
+  SHORT_ANSWER
+  PROOF
+}
+
+enum QuestionSource {
+  TEXTBOOK
+  EXAM
+  WORKBOOK
+  TEACHER
+  GENERATED
+}
+
+enum KnowledgeDomain {
+  ALGEBRA
+  GEOMETRY
+  STATISTICS
+  NUMBER
+  FUNCTION
+  PROBABILITY
+  CALCULUS
+  TRIGONOMETRY
+  VECTOR
+  LOGIC
+}
+
+enum DifficultyLevel {
+  VERY_EASY
+  EASY
+  MEDIUM
+  HARD
+  VERY_HARD
+}
+
+enum InteractiveCardType {
+  THOUGHT_QUESTION
+  QNA
+  MINI_PROBLEM
+  TEACHING_INTERACTION
+}
+
+enum WrongQuestionReviewStatus {
+  NEW
+  REVIEWING
+  MASTERED
+  ARCHIVED
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum DocumentSource {
+  TEXTBOOK
+  WORKBOOK
+  LECTURE_NOTE
+  EXAM
+  VIDEO_TRANSCRIPT
+}
+
+enum DocumentSubject {
+  MATH
+  CHINESE
+  ENGLISH
+  SCIENCE
+  SOCIAL
+}
+
+model User {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String?
+  googleId              String    @unique
+  avatarUrl             String?
+  role                  UserRole  @default(STUDENT)
+  onboardingCompleted   Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  student               Student?
+
+  @@map("users")
+}
+
+model Student {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String?
+  school          String?
+  grade           Int
+  className       String?
+  semester        Int
+  learningProfile Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  assessmentAttempts    AssessmentAttempt[]
+  questionAttempts      QuestionAttempt[]
+  wrongQuestions        WrongQuestion[]
+  knowledgePoints       StudentKnowledgePoint[]
+  learningProgress      LearningProgress[]
+  conversations         Conversation[]
+  learningProfile       StudentLearningProfile?
+
+  @@index([grade])
+  @@index([semester])
+  @@map("students")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  gradeLevel  Int
+  semester    Int
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+
+  units       Unit[]
+
+  @@index([gradeLevel, semester])
+  @@map("courses")
+}
+
+model Unit {
+  id              String   @id @default(cuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  code            String
+  name            String
+  description     String?
+  sortOrder       Int      @default(0)
+  knowledgePoints Json?
+  isActive        Boolean  @default(true)
+
+  levels          Level[]
+
+  @@index([courseId, sortOrder])
+  @@map("units")
+}
+
+model Level {
+  id                      String   @id @default(cuid())
+  unitId                  String
+  unit                    Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  levelNumber             Int
+  name                    String
+  description             String?
+  videoId                 String?  @unique
+  video                   Video?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  passScore               Int      @default(70)
+  questionCount           Int      @default(10)
+  difficultyDistribution  Json?
+  isActive                Boolean  @default(true)
+
+  questions               LevelQuestion[]
+  learningProgress        LearningProgress[]
+  assessments             Assessment[]
+
+  @@unique([unitId, levelNumber])
+  @@index([unitId, levelNumber])
+  @@map("levels")
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  url         String
+  durationSeconds Int
+  title       String
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  level       Level?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  cards       InteractiveCard[]
+
+  @@map("videos")
+}
+
+model InteractiveCard {
+  id              String   @id @default(cuid())
+  videoId         String
+  video           Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  triggerTimeSeconds Int
+  type            InteractiveCardType
+  content         Json
+  sortOrder       Int      @default(0)
+  isRequired      Boolean  @default(true)
+
+  @@index([videoId, triggerTimeSeconds])
+  @@map("interactive_cards")
+}
+
+model KnowledgePoint {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  description     String?
+  domain          KnowledgeDomain
+  topic           String
+  difficulty      Int      @default(3)
+  prerequisites   Json?
+  errorPatterns   Json?
+
+  questions       QuestionKnowledgePoint[]
+  studentMastery  StudentKnowledgePoint[]
+
+  @@index([domain, topic])
+  @@map("knowledge_points")
+}
+
+model Question {
+  id              String   @id @default(cuid())
+  type            QuestionType
+  stem            String
+  options         Json?
+  answer          String
+  solutionSteps   Json?
+  difficulty      Int      @default(3)
+  source          QuestionSource
+  gradeLevel      Int
+  tags            Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  knowledgePoints QuestionKnowledgePoint[]
+  levelQuestions  LevelQuestion[]
+  attempts        QuestionAttempt[]
+  wrongQuestions  WrongQuestion[]
+
+  @@index([gradeLevel, difficulty])
+  @@index([type])
+  @@map("questions")
+}
+
+model QuestionKnowledgePoint {
+  questionId         String
+  question           Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  knowledgePointId   String
+  knowledgePoint     KnowledgePoint @relation(fields: [knowledgePointId], references: [id], onDelete: Cascade)
+  weight             Float  @default(1.0)
+
+  @@id([questionId, knowledgePointId])
+  @@map("question_knowledge_points")
+}
+
+model LevelQuestion {
+  levelId      String
+  level        Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  sortOrder    Int      @default(0)
+
+  @@id([levelId, questionId])
+  @@map("level_questions")
+}
+
+model Assessment {
+  id          String   @id @default(cuid())
+  type        AssessmentType
+  levelId     String?
+  level       Level?   @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  name        String
+  config      Json
+  isActive    Boolean  @default(true)
+
+  attempts    AssessmentAttempt[]
+
+  @@index([type, levelId])
+  @@map("assessments")
+}
+
+model AssessmentAttempt {
+  id              String   @id @default(cuid())
+  assessmentId    String
+  assessment      Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score           Int
+  maxScore        Int
+  passed          Boolean
+  answers         Json
+  timeSpentSeconds Int
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  questionAttempts QuestionAttempt[]
+
+  @@index([studentId, completedAt])
+  @@index([assessmentId, studentId])
+  @@map("assessment_attempts")
+}
+
+model QuestionAttempt {
+  id                    String   @id @default(cuid())
+  assessmentAttemptId   String
+  assessmentAttempt     AssessmentAttempt @relation(fields: [assessmentAttemptId], references: [id], onDelete: Cascade)
+  questionId            String
+  question              Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  studentId             String
+  student               Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentAnswer         String?
+  isCorrect             Boolean
+  attemptNumber         Int      @default(1)
+  hintsUsed             Int      @default(0)
+  timeSpentSeconds      Int
+  errorAnalysis         Json?
+  createdAt             DateTime @default(now())
+
+  @@index([studentId, createdAt])
+  @@index([assessmentAttemptId, questionId])
+  @@map("question_attempts")
+}
+
+model WrongQuestion {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  errorCount      Int      @default(1)
+  firstErrorAt    DateTime @default(now())
+  lastErrorAt     DateTime @default(now())
+  reviewStatus    WrongQuestionReviewStatus @default(NEW)
+  reviewCount     Int      @default(0)
+  nextReviewAt    DateTime?
+  errorPatterns   Json?
+
+  @@unique([studentId, questionId])
+  @@index([studentId, reviewStatus, nextReviewAt])
+  @@map("wrong_questions")
+}
+
+model StudentKnowledgePoint {
+  studentId         String
+  student           Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  knowledgePointId  String
+  knowledgePoint    KnowledgePoint @relation(fields: [knowledgePointId], references: [id], onDelete: Cascade)
+  masteryScore      Float  @default(0)
+  confidence        Float  @default(0)
+  attemptCount      Int    @default(0)
+  correctCount      Int    @default(0)
+  lastAttemptAt     DateTime?
+  updatedAt         DateTime @updatedAt
+
+  @@id([studentId, knowledgePointId])
+  @@index([studentId, masteryScore])
+  @@map("student_knowledge_points")
+}
+
+model LearningProgress {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  levelId         String
+  level           Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  status          LevelStatus @default(LOCKED)
+  videoProgress   Float    @default(0)
+  cardsCompleted  Json?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  testAttempts    Int      @default(0)
+
+  @@unique([studentId, levelId])
+  @@index([studentId, status])
+  @@map("learning_progress")
+}
+
+model Conversation {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title           String?
+  status          ConversationStatus @default(ACTIVE)
+  contextSnapshot Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  messages        Message[]
+
+  @@index([studentId, updatedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            MessageRole
+  content         String
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model StudentLearningProfile {
+  studentId           String   @id
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradeLevel          Int
+  unitMastery         Json
+  knowledgePointMastery Json
+  errorPatterns       Json
+  weakAreas           Json
+  strongAreas         Json
+  assessedAt          DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("student_learning_profiles")
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  source      DocumentSource
+  gradeLevel  Int
+  subject     DocumentSubject
+  unitCode    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chunks      DocumentChunk[]
+
+  @@index([gradeLevel, subject])
+  @@index([unitCode])
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex  Int
+  content     String
+  embedding   Unsupported("vector")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([documentId, chunkIndex])
+  @@map("document_chunks")
+}
