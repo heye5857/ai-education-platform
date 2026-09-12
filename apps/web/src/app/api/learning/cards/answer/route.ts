@@ -178,6 +178,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    const priorAttempts = await tx.questionAttempt.count({
+      where: { questionId: question.id, studentId: student.id },
+    })
     await tx.questionAttempt.create({
       data: {
         assessmentAttemptId: attempt.id,
@@ -185,6 +188,7 @@ export async function POST(request: NextRequest) {
         studentId: student.id,
         studentAnswer: answer,
         isCorrect,
+        attemptNumber: priorAttempts + 1,
         hintsUsed: 0,
         timeSpentSeconds: parsed.data.timeSpentSeconds,
       },
@@ -201,7 +205,10 @@ export async function POST(request: NextRequest) {
     return { attemptId: attempt.id };
   })
 
-  await markCardCompleted(student.id, level.id, card.id)
+  // 只有答對才標記完成：答錯可重試（每次作答都會留紀錄），正解不直接公佈
+  if (isCorrect) {
+    await markCardCompleted(student.id, level.id, card.id)
+  }
 
   const hint = typeof content.hint === 'string' ? content.hint : ''
   return NextResponse.json(
@@ -210,8 +217,7 @@ export async function POST(request: NextRequest) {
       isCorrect,
       feedback: isCorrect
         ? '答對了！🎉 觀念很清楚，繼續保持！'
-        : `再想想看 💡 提示：${hint || '檢查一下計算過程'}`,
-      correctAnswer: isCorrect ? undefined : expected,
+        : `答錯了，再想想看 💡 提示：${hint || '檢查一下計算過程'}`,
       attemptId: result.attemptId,
     },
     { status: 200 }
