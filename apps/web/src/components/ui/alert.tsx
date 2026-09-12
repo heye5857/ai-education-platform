@@ -9,7 +9,7 @@ export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
+  ({ className, variant = 'default', children, ...props }, ref) => {
     const icons = {
       default: <AlertCircle className="h-4 w-4" />,
       destructive: <AlertCircle className="h-4 w-4" />,
@@ -37,10 +37,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       >
         <div className="flex items-start gap-3">
           {icons[variant]}
-          <div className="flex-1">
-            <AlertTitle />
-            <AlertDescription />
-          </div>
+          <div className="flex-1">{children}</div>
         </div>
       </div>
     )
