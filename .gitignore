@@ -57,6 +57,9 @@ prisma/migrations/.migration_lock.toml
 # Obsidian vault (optional - can be tracked separately)
 # obsidian-vault/.obsidian/
 # obsidian-vault/.trash/
+# Obsidian local plugin files (editor-specific, not project docs)
+obsidian-vault/.obsidian/plugins/
+obsidian-vault/.obsidian/community-plugins.json
 
 # Temporary files
 *.tmp
