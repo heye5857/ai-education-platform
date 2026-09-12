@@ -32,12 +32,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = account.access_token
         token.refreshToken = account.refresh_token
       }
+      // 每次 JWT 更新時同步 Student 檔案狀態（引導完成後自動帶上 studentId）
+      if (token.id) {
+        try {
+          const { getPrismaClient } = await import('@/lib/db')
+          const db = getPrismaClient()
+          const [dbUser, student] = await Promise.all([
+            db.user.findUnique({
+              where: { id: token.id as string },
+              select: { onboardingCompleted: true },
+            }),
+            db.student.findUnique({
+              where: { userId: token.id as string },
+              select: { id: true, grade: true, semester: true },
+            }),
+          ])
+          token.studentId = student?.id ?? null
+          token.grade = student?.grade ?? null
+          token.semester = student?.semester ?? null
+          token.onboardingCompleted = dbUser?.onboardingCompleted ?? false
+        } catch {
+          // DB 暫時不可用時保留舊 token，不阻擋登入流程
+        }
+      }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.studentId = (token.studentId as string | null) ?? null
+        session.user.onboardingCompleted = (token.onboardingCompleted as boolean) ?? false
       }
       return session
     },
@@ -66,6 +91,8 @@ declare module 'next-auth' {
       email?: string | null
       image?: string | null
       role: string
+      studentId: string | null
+      onboardingCompleted: boolean
     }
   }
   interface User { role: string }
@@ -74,5 +101,9 @@ declare module 'next-auth' {
     role: string
     accessToken?: string
     refreshToken?: string
+    studentId?: string | null
+    grade?: number | null
+    semester?: number | null
+    onboardingCompleted?: boolean
   }
 }

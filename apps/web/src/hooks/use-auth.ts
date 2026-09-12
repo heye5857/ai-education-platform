@@ -16,19 +16,30 @@ export function useAuth() {
   }
 
   // Redirect to login if accessing protected routes without session
+  // Redirect to onboarding if authenticated but onboarding not completed
   useEffect(() => {
     const protectedRoutes = ['/dashboard']
     const isProtected = protectedRoutes.some((route) => pathname.startsWith(route))
     const isAuthRoute = pathname === '/login' || pathname.startsWith('/auth')
+    const onOnboarding =
+      pathname === '/onboarding' || pathname.startsWith('/onboarding/')
 
     if (status === 'unauthenticated' && isProtected) {
       router.push('/login')
+      return
     }
 
-    if (status === 'authenticated' && isAuthRoute) {
-      router.push('/dashboard')
+    if (status === 'authenticated') {
+      const onboarded = user?.onboardingCompleted ?? false
+      if (!onboarded && !onOnboarding) {
+        router.push('/onboarding')
+        return
+      }
+      if (onboarded && isAuthRoute) {
+        router.push('/dashboard')
+      }
     }
-  }, [status, pathname, router])
+  }, [status, pathname, router, user?.onboardingCompleted])
 
   return {
     user,
