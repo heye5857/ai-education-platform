@@ -73,6 +73,12 @@ export const levelTestStartSchema = z.object({
 // Learning progress schemas (Phase 4)
 export const levelIdSchema = z.string().cuid('無效的 Level ID')
 
+export const cardAnswerSchema = z.object({
+  cardId: z.string().cuid('無效的卡片 ID'),
+  answer: z.string().max(2000, '回答不能超過 2000 個字元').default(''),
+  timeSpentSeconds: z.number().int().min(0).default(0),
+})
+
 export const progressStartSchema = z.object({
   levelId: levelIdSchema,
 })

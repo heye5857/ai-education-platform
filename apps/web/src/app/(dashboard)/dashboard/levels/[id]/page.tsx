@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { VideoPlayer } from '@/components/learning/VideoPlayer'
+import { InteractiveCard, type InteractiveCardData } from '@/components/learning/InteractiveCard'
 import { ArrowLeft, Play, Lock, CheckCircle, Star, Clock, MonitorPlay } from 'lucide-react'
 import { api, queryKeys } from '@/lib/api/client'
 import { useToast } from '@/hooks/use-toast'
@@ -64,6 +65,21 @@ export default function LevelDetailPage() {
     queryFn: () => api.get<LevelDetail>(`/api/learning/levels/${levelId}`),
     retry: false,
   })
+
+  const cardsQuery = useQuery({
+    queryKey: ['learning', 'cards', levelId],
+    queryFn: () =>
+      api.get<{ cards: InteractiveCardData[] }>(
+        `/api/learning/cards?levelId=${encodeURIComponent(levelId)}`
+      ),
+    retry: false,
+    enabled: !!data && data.status !== 'LOCKED',
+  })
+
+  const refreshCardsAndLevel = async () => {
+    await cardsQuery.refetch()
+    await queryClient.invalidateQueries({ queryKey: queryKeys.learning.level(levelId) })
+  }
 
   const startMutation = useMutation({
     mutationFn: () =>
@@ -236,16 +252,40 @@ export default function LevelDetailPage() {
         </Card>
       </section>
 
-      {/* 互動卡片區（B-4 接作答功能） */}
+      {/* 互動卡片區 */}
       <section aria-label="互動卡片">
-        <h2 className="text-xl font-semibold mb-4">互動卡片</h2>
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            {data.cardCount > 0
-              ? `本關有 ${data.cardCount} 張互動卡片，作答功能即將推出`
-              : '本關暫無互動卡片'}
-          </CardContent>
-        </Card>
+        <h2 className="text-xl font-semibold mb-4">
+          互動卡片
+          {cardsQuery.data && cardsQuery.data.cards.length > 0 && (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {cardsQuery.data.cards.filter((c) => c.completed).length}/{cardsQuery.data.cards.length} 已完成
+            </span>
+          )}
+        </h2>
+        {cardsQuery.isLoading && (
+          <div className="flex items-center justify-center py-8" role="status" aria-label="載入卡片中">
+            <Spinner size="md" />
+          </div>
+        )}
+        {cardsQuery.isError && (
+          <Alert variant="destructive">
+            <AlertDescription>載入卡片失敗，請重新整理頁面再試</AlertDescription>
+          </Alert>
+        )}
+        {cardsQuery.data && cardsQuery.data.cards.length === 0 && (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              本關暫無互動卡片
+            </CardContent>
+          </Card>
+        )}
+        {cardsQuery.data && cardsQuery.data.cards.length > 0 && (
+          <div className="space-y-4">
+            {cardsQuery.data.cards.map((card) => (
+              <InteractiveCard key={card.id} card={card} onAnswered={refreshCardsAndLevel} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 上下關導航 */}

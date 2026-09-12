@@ -219,6 +219,61 @@ async function main() {
     console.log(`  Unit: ${created.code} - ${created.levels.length} levels`)
   }
 
+  // 第一關示範影片 + 互動卡片（影片 URL 留空表示製作中，頁面會顯示佔位）
+  const firstLevel = await prisma.level.findFirst({
+    where: { unit: { code: 'INTEGER_OPERATIONS', courseId: course.id }, levelNumber: 1 },
+    include: { video: true },
+  })
+  if (firstLevel) {
+    // 用 title 查復用，避免 units 重建後舊 video 變孤兒又重複建立
+    let video = await prisma.video.findFirst({
+      where: { title: '整數認識與大小比較（製作中）' },
+    })
+    if (!video) {
+      video = await prisma.video.create({
+        data: {
+          url: '',
+          title: '整數認識與大小比較（製作中）',
+          description: '第一關教學影片，內容團隊錄製中',
+          durationSeconds: 600,
+        },
+      })
+    }
+    await prisma.level.update({
+      where: { id: firstLevel.id },
+      data: { videoId: video.id },
+    })
+    await prisma.interactiveCard.deleteMany({ where: { videoId: video.id } })
+    await prisma.interactiveCard.createMany({
+      data: [
+        {
+          videoId: video.id,
+          triggerTimeSeconds: 60,
+          type: 'THOUGHT_QUESTION',
+          content: {
+            question: '想一想：為什麼需要發明負數？你能舉出生活中的例子嗎？',
+            hint: '想想溫度計、海拔高度或欠錢的情境',
+          },
+          sortOrder: 1,
+          isRequired: false,
+        },
+        {
+          videoId: video.id,
+          triggerTimeSeconds: 300,
+          type: 'MINI_PROBLEM',
+          content: {
+            question: '請計算：(-3) + 5 = ?',
+            answer: '2',
+            hint: '在數線上從 -3 向右走 5 格',
+          },
+          sortOrder: 2,
+          isRequired: true,
+        },
+      ],
+    })
+    console.log(`  Demo video + 2 cards for level: ${firstLevel.name}`)
+  }
+
   // KnowledgePoints（upsert，冪等）
   for (const kp of KNOWLEDGE_POINTS) {
     await prisma.knowledgePoint.upsert({
