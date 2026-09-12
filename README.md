@@ -62,7 +62,7 @@ ai-education-platform/
 
 ```bash
 # 1. 克隆專案
-git clone https://github.com/heye5857>/ai-education-platform.git
+git clone https://github.com/heye5857/ai-education-platform.git
 cd ai-education-platform
 
 # 2. 安裝依賴
