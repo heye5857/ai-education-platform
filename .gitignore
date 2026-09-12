@@ -48,6 +48,9 @@ pnpm-debug.log*
 # Turbo
 .turbo
 
+# OpenCode session data
+.omo/
+
 # Prisma
 prisma/migrations/.migration_lock.toml
 

@@ -1,0 +1,1 @@
+export const dbPackage = '@ai-edu/db'
