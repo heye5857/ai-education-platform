@@ -159,30 +159,29 @@ export function InteractiveCard({
           </Alert>
         )}
 
-        {!card.completed ? (
-          <Button
-            onClick={submit}
-            disabled={
-              mutation.isPending ||
-              (card.type !== 'TEACHING_INTERACTION' && answer.trim().length === 0)
-            }
-            className="w-full sm:w-auto gap-2"
-          >
-            {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {card.type === 'TEACHING_INTERACTION'
+        {card.completed && hint && (
+          <p className="text-sm text-muted-foreground flex items-start gap-1.5">
+            <Lightbulb className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+            提示回顧：{hint}
+          </p>
+        )}
+        <Button
+          onClick={submit}
+          disabled={
+            mutation.isPending ||
+            (card.type !== 'TEACHING_INTERACTION' && answer.trim().length === 0)
+          }
+          className="w-full sm:w-auto gap-2"
+        >
+          {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+          {card.completed
+            ? '再答一次'
+            : card.type === 'TEACHING_INTERACTION'
               ? '我知道了'
               : card.type === 'MINI_PROBLEM'
                 ? '送出答案'
                 : '送出'}
-          </Button>
-        ) : (
-          hint && (
-            <p className="text-sm text-muted-foreground flex items-start gap-1.5">
-              <Lightbulb className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
-              提示回顧：{hint}
-            </p>
-          )
-        )}
+        </Button>
       </CardContent>
     </Card>
   )
