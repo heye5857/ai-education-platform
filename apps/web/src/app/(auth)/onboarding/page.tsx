@@ -17,22 +17,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { onboardingSchema, type OnboardingInput } from '@/lib/validations/schemas'
 import { cn } from '@/lib/utils'
+import { GRADES, SEMESTERS } from '@/lib/semester'
 
 export const dynamic = 'force-dynamic'
-
-const GRADES = [
-  { value: 7, label: '國一 (7年級)' },
-  { value: 8, label: '國二 (8年級)' },
-  { value: 9, label: '國三 (9年級)' },
-  { value: 10, label: '高一 (10年級)' },
-  { value: 11, label: '高二 (11年級)' },
-  { value: 12, label: '高三 (12年級)' },
-]
-
-const SEMESTERS = [
-  { value: 1, label: '上學期 (8月-1月)' },
-  { value: 2, label: '下學期 (2月-7月)' },
-]
 
 function OnboardingPageContent() {
   const router = useRouter()

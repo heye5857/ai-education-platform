@@ -537,3 +537,18 @@ model DocumentChunk {
   @@index([documentId, chunkIndex])
   @@map("document_chunks")
 }
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  studentId String?
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  createdAt DateTime @default(now())
+
+  @@index([studentId, createdAt])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
