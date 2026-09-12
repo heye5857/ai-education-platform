@@ -35,7 +35,8 @@ function OnboardingPageContent() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isValid },
+    trigger,
+    formState: { errors },
   } = useForm<OnboardingInput>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -53,8 +54,11 @@ function OnboardingPageContent() {
 
   const totalSteps = 3
 
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1)
+  const nextStep = async () => {
+    // 只驗證當前步驟的欄位，通過才前進（isValid 涵蓋全表單，不適用多步驟）
+    const fields = steps[step - 1].fields as (keyof OnboardingInput)[]
+    const ok = await trigger(fields)
+    if (ok && step < totalSteps) setStep(step + 1)
   }
 
   const prevStep = () => {
@@ -336,12 +340,12 @@ function OnboardingPageContent() {
                 </Button>
 
                 {step < totalSteps ? (
-                  <Button type="button" onClick={nextStep} disabled={!isValid} className="gap-2">
+                  <Button type="button" onClick={nextStep} className="gap-2">
                     下一步
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={isLoading || !isValid} className="gap-2 w-full sm:w-auto">
+                  <Button type="submit" disabled={isLoading} className="gap-2 w-full sm:w-auto">
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
