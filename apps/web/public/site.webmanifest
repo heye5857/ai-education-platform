@@ -1,0 +1,18 @@
+{
+  "name": "AI 數學平台",
+  "short_name": "AI數學",
+  "description": "以 AI 為核心的個人化數學教學平台",
+  "lang": "zh-TW",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

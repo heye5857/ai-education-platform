@@ -3,7 +3,7 @@
 import * as React from 'react'
 import * as ToastPrimitive from '@radix-ui/react-toast'
 import { cn } from '@/lib/utils'
-import { CheckCircle, AlertCircle, Info, X } from 'lucide-react'
+import { CheckCircle, AlertCircle, Info } from 'lucide-react'
 
 const ToastProvider = ToastPrimitive.Provider
 

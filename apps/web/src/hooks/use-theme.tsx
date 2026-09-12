@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 
 type Theme = 'light' | 'dark' | 'system'

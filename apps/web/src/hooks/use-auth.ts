@@ -53,7 +53,7 @@ export function useAuth() {
 }
 
 export function useRequireAuth() {
-  const { user, status, isLoading, isAuthenticated } = useAuth()
+  const { user, isLoading, isAuthenticated } = useAuth()
 
   if (isLoading) {
     return { user: null, isLoading: true, isAuthenticated: false }

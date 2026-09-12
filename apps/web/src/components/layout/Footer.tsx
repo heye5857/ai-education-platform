@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
 import { BookOpen, Github, Twitter, Mail } from 'lucide-react'
 
 export function Footer() {

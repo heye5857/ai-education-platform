@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
 
 const errorMessages: Record<string, string> = {
   Configuration: '配置錯誤，請聯繫管理員',

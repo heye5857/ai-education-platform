@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, LayoutDashboard, BookOpen, MessageSquare, BarChart, Settings, User, FolderOpen, Trophy, HelpCircle } from 'lucide-react'
+import { ChevronLeft, LayoutDashboard, BookOpen, MessageSquare, BarChart, Settings, FolderOpen, Trophy, HelpCircle } from 'lucide-react'
 import { useMobileNav } from '@/hooks/use-mobile-nav'
 
 const navigation = [
@@ -21,7 +21,7 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { isOpen, toggle } = useMobileNav()
+  const { isOpen, close } = useMobileNav()
   const [collapsed, setCollapsed] = React.useState(false)
 
   return (

@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { Lock, CheckCircle, Play, Star, Clock, ArrowRight } from 'lucide-react'
+import { Lock, CheckCircle, Play, Star, Clock } from 'lucide-react'
 
 export interface MapNodeProps {
   levelNumber: number
