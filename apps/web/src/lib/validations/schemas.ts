@@ -70,6 +70,21 @@ export const levelTestStartSchema = z.object({
   levelId: z.string().cuid('無效的 Level ID'),
 })
 
+// Learning progress schemas (Phase 4)
+export const levelIdSchema = z.string().cuid('無效的 Level ID')
+
+export const progressStartSchema = z.object({
+  levelId: levelIdSchema,
+})
+
+export const progressUpdateSchema = z.object({
+  levelId: levelIdSchema,
+  videoProgress: z.number().min(0, '影片進度需介於 0-100').max(100, '影片進度需介於 0-100').optional(),
+  cardsCompleted: z
+    .object({ completedCardIds: z.array(z.string()).default([]) })
+    .optional(),
+})
+
 // AI Chat schemas
 export const aiMessageSchema = z.object({
   conversationId: z.string().cuid().optional(),
