@@ -125,7 +125,7 @@ export function InteractiveCard({
             placeholder="寫下你的想法…"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            disabled={mutation.isPending || card.completed}
+            disabled={mutation.isPending}
             rows={3}
           />
         )}
@@ -135,7 +135,7 @@ export function InteractiveCard({
             placeholder={card.type === 'MINI_PROBLEM' ? '請輸入答案…' : '請輸入你的回答…'}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            disabled={mutation.isPending || card.completed}
+            disabled={mutation.isPending}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submit()
             }}
