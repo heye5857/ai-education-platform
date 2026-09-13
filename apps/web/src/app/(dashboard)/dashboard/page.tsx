@@ -176,6 +176,27 @@ export default function DashboardHomePage() {
         </div>
       </section>
 
+      {/* 新生能力測驗邀請（尚無任何作答紀錄時顯示） */}
+      {isNewUser && (
+        <section aria-labelledby="assessment-heading">
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-5 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <p id="assessment-heading" className="font-semibold">
+                  先花 10 分鐘做能力測驗，了解你的起點
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  依你的年級跨單元組卷，結果用於個人化學習建議
+                </p>
+              </div>
+              <Button variant="default" onClick={() => router.push('/dashboard/assessment/initial')}>
+                開始能力測驗
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
       {/* 新用戶空狀態引導 */}
       {isNewUser && (
         <section aria-labelledby="onboarding-heading">
