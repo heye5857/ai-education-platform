@@ -219,60 +219,269 @@ async function main() {
     console.log(`  Unit: ${created.code} - ${created.levels.length} levels`)
   }
 
-  // 第一關示範影片 + 互動卡片（影片 URL 留空表示製作中，頁面會顯示佔位）
-  const firstLevel = await prisma.level.findFirst({
-    where: { unit: { code: 'INTEGER_OPERATIONS', courseId: course.id }, levelNumber: 1 },
-    include: { video: true },
+  // 示範影片 + 互動卡片（每關 1 思考題 + 1 小試身手）
+  // 影片 URL 留空表示製作中，頁面會顯示佔位；自編 demo 內容，正式內容待教學團隊提供
+  const DEMO_CARDS: Record<
+    string,
+    Array<{
+      type: 'THOUGHT_QUESTION' | 'MINI_PROBLEM'
+      question: string
+      answer?: string
+      hint: string
+    }>
+  > = {
+    'INTEGER_OPERATIONS#1': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：為什麼需要發明負數？你能舉出生活中的例子嗎？',
+        hint: '想想溫度計、海拔高度或欠錢的情境',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '請計算：(-3) + 5 = ?',
+        answer: '2',
+        hint: '在數線上從 -3 向右走 5 格',
+      },
+    ],
+    'INTEGER_OPERATIONS#2': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：負負得正是什麼意思？能用欠錢的例子說明嗎？',
+        hint: '欠的錢被免除，就等於得到錢',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '請計算：(-2) + (-6) = ?',
+        answer: '-8',
+        hint: '同號相加：符號不變，絕對值相加',
+      },
+    ],
+    'INTEGER_OPERATIONS#3': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：乘除法要怎麼判斷最後結果的正負號？',
+        hint: '數一數式子裡有幾個負號：奇數個為負，偶數個為正',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '請計算：(-4) × (-3) = ?',
+        answer: '12',
+        hint: '負負得正：4 × 3 = 12',
+      },
+    ],
+    'INTEGER_OPERATIONS#4': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：為什麼四則運算要先乘除後加減？',
+        hint: '想想 2 + 3 × 4 若先加會發生什麼不合理的事',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '請計算：2 + 3 × 4 = ?',
+        answer: '14',
+        hint: '先算 3 × 4 = 12，再加 2',
+      },
+    ],
+    'FACTOR_MULTIPLE#1': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：什麼是因數？6 的因數有哪些？',
+        hint: '能整除 6 的數都是它的因數',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '6 的因數共有幾個？（填數字）',
+        answer: '4',
+        hint: '1、2、3、6，共 4 個',
+      },
+    ],
+    'FACTOR_MULTIPLE#2': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：把數字寫成標準分解式有什麼好處？',
+        hint: '標準分解式一眼就能看出因數結構',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '12 的標準分解式 2^2 × 3 中，質因數 2 的指數是？（填數字）',
+        answer: '2',
+        hint: '2^2 表示 2 連乘兩次',
+      },
+    ],
+    'FACTOR_MULTIPLE#3': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：什麼時候用最大公因數，什麼時候用最小公倍數？',
+        hint: '分東西用公因數，湊齊用公倍數',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '4 和 6 的最大公因數是？（填數字）',
+        answer: '2',
+        hint: '4 = 2^2，6 = 2 × 3，共同擁有 2',
+      },
+    ],
+    'FACTOR_MULTIPLE#4': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：分組問題怎麼判斷該用公因數還是公倍數？',
+        hint: '關鍵字「最多分幾組」通常是公因數',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '8 和 12 的最小公倍數是？（填數字）',
+        answer: '24',
+        hint: '8 = 2^3，12 = 2^2 × 3，取最高次方相乘',
+      },
+    ],
+    'LINEAR_EQUATION#1': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：天平兩邊同時加減相同的東西，為什麼還會平衡？',
+        hint: '這就是等量公理，是解方程式的基礎',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: 'x + 3 = 7，則 x = ?（填數字）',
+        answer: '4',
+        hint: '兩邊同減 3',
+      },
+    ],
+    'LINEAR_EQUATION#2': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：移項的時候為什麼正負號要改變？',
+        hint: '移項其實是兩邊同時做加減運算的簡寫',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '2x = 10，則 x = ?（填數字）',
+        answer: '5',
+        hint: '兩邊同除以 2',
+      },
+    ],
+    'LINEAR_EQUATION#3': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：看到文字應用題，第一步該做什麼？',
+        hint: '先設未知數，再找出等量關係列式',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '某數的 3 倍加 2 等於 11，此數為何？（填數字）',
+        answer: '3',
+        hint: '列式 3x + 2 = 11，解得 x = 3',
+      },
+    ],
+    'LINEAR_EQUATION#4': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：解完方程式為什麼還要驗算？',
+        hint: '把答案代回去，確認等號兩邊真的相等',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '3(x - 1) = 9，則 x = ?（填數字）',
+        answer: '4',
+        hint: '先展開括號：3x - 3 = 9',
+      },
+    ],
+    'PLANE_GEOMETRY#1': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：生活中有哪些角？它們各是幾度？',
+        hint: '看看書桌角落、時鐘指針、開門的角度',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '直角是幾度？（填數字）',
+        answer: '90',
+        hint: '直角 = 90 度',
+      },
+    ],
+    'PLANE_GEOMETRY#2': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：為什麼三角形內角和一定是 180 度？',
+        hint: '把三個角剪下來拼拼看，會拼成平角',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '三角形兩角分別為 50 度、60 度，第三角是幾度？（填數字）',
+        answer: '70',
+        hint: '180 - 50 - 60 = 70',
+      },
+    ],
+    'PLANE_GEOMETRY#3': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：正方形和長方形有什麼相同和不同？',
+        hint: '從邊長和角度兩個角度比較',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '邊長為 5 的正方形，周長是多少？（填數字）',
+        answer: '20',
+        hint: '正方形周長 = 邊長 × 4',
+      },
+    ],
+    'PLANE_GEOMETRY#4': [
+      {
+        type: 'THOUGHT_QUESTION',
+        question: '想一想：用尺量出來的結果和用證明的有什麼不一樣？',
+        hint: '測量會有誤差，證明對所有情況都成立',
+      },
+      {
+        type: 'MINI_PROBLEM',
+        question: '三邊長為 3、4、5 的三角形是直角三角形嗎？（填 是/否）',
+        answer: '是',
+        hint: '3^2 + 4^2 = 9 + 16 = 25 = 5^2，符合畢氏定理',
+      },
+    ],
+  }
+
+  const allLevels = await prisma.level.findMany({
+    where: { unit: { courseId: course.id } },
+    include: { unit: { select: { code: true } }, video: true },
   })
-  if (firstLevel) {
+  let cardCount = 0
+  for (const lv of allLevels) {
+    const key = `${lv.unit.code}#${lv.levelNumber}`
+    const cards = DEMO_CARDS[key]
+    if (!cards) continue
     // 用 title 查復用，避免 units 重建後舊 video 變孤兒又重複建立
-    let video = await prisma.video.findFirst({
-      where: { title: '整數認識與大小比較（製作中）' },
-    })
+    const title = `${lv.name}（製作中）`
+    let video = lv.video ?? (await prisma.video.findFirst({ where: { title } }))
     if (!video) {
       video = await prisma.video.create({
         data: {
           url: '',
-          title: '整數認識與大小比較（製作中）',
-          description: '第一關教學影片，內容團隊錄製中',
+          title,
+          description: `${lv.name}教學影片，內容團隊錄製中`,
           durationSeconds: 600,
         },
       })
     }
     await prisma.level.update({
-      where: { id: firstLevel.id },
+      where: { id: lv.id },
       data: { videoId: video.id },
     })
     await prisma.interactiveCard.deleteMany({ where: { videoId: video.id } })
     await prisma.interactiveCard.createMany({
-      data: [
-        {
-          videoId: video.id,
-          triggerTimeSeconds: 60,
-          type: 'THOUGHT_QUESTION',
-          content: {
-            question: '想一想：為什麼需要發明負數？你能舉出生活中的例子嗎？',
-            hint: '想想溫度計、海拔高度或欠錢的情境',
-          },
-          sortOrder: 1,
-          isRequired: false,
-        },
-        {
-          videoId: video.id,
-          triggerTimeSeconds: 300,
-          type: 'MINI_PROBLEM',
-          content: {
-            question: '請計算：(-3) + 5 = ?',
-            answer: '2',
-            hint: '在數線上從 -3 向右走 5 格',
-          },
-          sortOrder: 2,
-          isRequired: true,
-        },
-      ],
+      data: cards.map((c, i) => ({
+        videoId: video!.id,
+        triggerTimeSeconds: 60 + i * 240,
+        type: c.type,
+        content: c.answer !== undefined
+          ? { question: c.question, answer: c.answer, hint: c.hint }
+          : { question: c.question, hint: c.hint },
+        sortOrder: i + 1,
+        isRequired: c.type === 'MINI_PROBLEM',
+      })),
     })
-    console.log(`  Demo video + 2 cards for level: ${firstLevel.name}`)
+    cardCount += cards.length
   }
+  console.log(`  Demo videos + ${cardCount} cards for ${allLevels.length} levels`)
 
   // KnowledgePoints（upsert，冪等）
   for (const kp of KNOWLEDGE_POINTS) {
