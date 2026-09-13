@@ -301,7 +301,216 @@ async function main() {
   }
   console.log(`KnowledgePoints: ${KNOWLEDGE_POINTS.length} upserted`)
 
-  console.log(`\n✅ Seed 完成：1 course / ${UNITS.length} units / ${levelCount} levels / ${KNOWLEDGE_POINTS.length} KPs`)
+  // 示範測驗題（自編 demo，非 225 題原始資料；以 tags.seedDemo 標記，冪等重建）
+  const DEMO_TAG = 'g7-integers-v1'
+  await prisma.question.deleteMany({
+    where: { tags: { path: ['seedDemo'], equals: DEMO_TAG } },
+  })
+
+  const demoLevels = await prisma.level.findMany({
+    where: { unit: { courseId: course.id } },
+    include: { unit: { select: { code: true } } },
+  })
+  const demoLevelId = (unitCode: string, n: number) =>
+    demoLevels.find((l) => l.unit.code === unitCode && l.levelNumber === n)?.id
+  const kpId = async (code: string) =>
+    (await prisma.knowledgePoint.findUnique({ where: { code } }))?.id
+
+  const integerKp = await kpId('INTEGER_OPERATION')
+  const DEMO_QUESTIONS: Array<{
+    type: 'SINGLE_CHOICE' | 'FILL_BLANK' | 'SHORT_ANSWER'
+    stem: string
+    options?: Array<{ id: string; text: string }>
+    answer: string
+    solutionSteps: string[]
+    difficulty: number
+    unitCode: string
+    levelNumber: number
+    kpIds: Array<string | undefined>
+  }> = [
+    {
+      type: 'SINGLE_CHOICE',
+      stem: '下列哪一個數最大？',
+      options: [
+        { id: 'A', text: '-5' },
+        { id: 'B', text: '-2' },
+        { id: 'C', text: '0' },
+        { id: 'D', text: '3' },
+      ],
+      answer: 'D',
+      solutionSteps: ['正數大於 0，0 大於所有負數', '故最大的是 3'],
+      difficulty: 1,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 1,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'FILL_BLANK',
+      stem: '在數線上，-4 的相反數是 ___。',
+      answer: '4',
+      solutionSteps: ['相反數：與原點等距、方向相反的數', '-4 的相反數為 4'],
+      difficulty: 1,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 1,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'SINGLE_CHOICE',
+      stem: '氣溫 -3°C 比 2°C 低幾度？',
+      options: [
+        { id: 'A', text: '1 度' },
+        { id: 'B', text: '5 度' },
+        { id: 'C', text: '-5 度' },
+        { id: 'D', text: '6 度' },
+      ],
+      answer: 'B',
+      solutionSteps: ['溫差 = 2 - (-3) = 2 + 3 = 5'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 1,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'FILL_BLANK',
+      stem: '比 -2 大 3 的數是 ___。',
+      answer: '1',
+      solutionSteps: ['-2 + 3 = 1'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 1,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'SINGLE_CHOICE',
+      stem: '下列敘述何者正確？',
+      options: [
+        { id: 'A', text: '0 是正整數' },
+        { id: 'B', text: '0 是負整數' },
+        { id: 'C', text: '0 既不是正整數也不是負整數' },
+        { id: 'D', text: '0 是自然數也是正整數' },
+      ],
+      answer: 'C',
+      solutionSteps: ['0 為整數，但不屬於正整數也不屬於負整數'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 1,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'FILL_BLANK',
+      stem: '絕對值 |-7| = ___。',
+      answer: '7',
+      solutionSteps: ['絕對值表示與原點的距離，恆為非負數'],
+      difficulty: 1,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 1,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'FILL_BLANK',
+      stem: '(-3) + 5 = ___。',
+      answer: '2',
+      solutionSteps: ['異號相加：取絕對值大者的符號', '5 - 3 = 2'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 2,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'FILL_BLANK',
+      stem: '4 - 9 = ___。',
+      answer: '-5',
+      solutionSteps: ['4 - 9 = 4 + (-9) = -5'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 2,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'SINGLE_CHOICE',
+      stem: '(-2) + (-6) = ?',
+      options: [
+        { id: 'A', text: '-8' },
+        { id: 'B', text: '8' },
+        { id: 'C', text: '4' },
+        { id: 'D', text: '-4' },
+      ],
+      answer: 'A',
+      solutionSteps: ['同號相加：符號不變，絕對值相加'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 2,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'FILL_BLANK',
+      stem: '0 - (-5) = ___。',
+      answer: '5',
+      solutionSteps: ['減去負數等於加上正數：0 + 5 = 5'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 2,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'SINGLE_CHOICE',
+      stem: '下列哪個算式的結果最小？',
+      options: [
+        { id: 'A', text: '-1 + 2' },
+        { id: 'B', text: '-3 + 1' },
+        { id: 'C', text: '2 - 5' },
+        { id: 'D', text: '0 - 1' },
+      ],
+      answer: 'C',
+      solutionSteps: ['A=1，B=-2，C=-3，D=-1，最小的是 -3'],
+      difficulty: 3,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 2,
+      kpIds: [integerKp],
+    },
+    {
+      type: 'SHORT_ANSWER',
+      stem: '小明有 50 元，買了 65 元的文具，還差多少元？（填數字即可）',
+      answer: '15',
+      solutionSteps: ['65 - 50 = 15，還差 15 元'],
+      difficulty: 2,
+      unitCode: 'INTEGER_OPERATIONS',
+      levelNumber: 2,
+      kpIds: [integerKp],
+    },
+  ]
+
+  let demoCount = 0
+  for (const q of DEMO_QUESTIONS) {
+    const levelId = demoLevelId(q.unitCode, q.levelNumber)
+    if (!levelId) continue
+    const created = await prisma.question.create({
+      data: {
+        type: q.type,
+        stem: q.stem,
+        options: q.options ?? undefined,
+        answer: q.answer,
+        solutionSteps: q.solutionSteps,
+        difficulty: q.difficulty,
+        source: 'GENERATED',
+        gradeLevel: 7,
+        tags: { seedDemo: DEMO_TAG },
+      },
+    })
+    await prisma.levelQuestion.create({
+      data: { levelId, questionId: created.id, sortOrder: demoCount },
+    })
+    for (const kp of q.kpIds) {
+      if (!kp) continue
+      await prisma.questionKnowledgePoint.create({
+        data: { questionId: created.id, knowledgePointId: kp, weight: 1.0 },
+      })
+    }
+    demoCount++
+  }
+  console.log(`Demo questions: ${demoCount} created (levels 1-2)`)
+
+  console.log(`\n✅ Seed 完成：1 course / ${UNITS.length} units / ${levelCount} levels / ${KNOWLEDGE_POINTS.length} KPs / ${demoCount} demo questions`)
 }
 
 main()
