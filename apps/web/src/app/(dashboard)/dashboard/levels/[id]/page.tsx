@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { VideoPlayer } from '@/components/learning/VideoPlayer'
 import { InteractiveCard, type InteractiveCardData } from '@/components/learning/InteractiveCard'
-import { ArrowLeft, Play, Lock, CheckCircle, Star, Clock, MonitorPlay } from 'lucide-react'
+import { ArrowLeft, Play, Lock, CheckCircle, Star, Clock, MonitorPlay, Trophy } from 'lucide-react'
 import { api, queryKeys } from '@/lib/api/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -221,7 +221,7 @@ export default function LevelDetailPage() {
           <CardHeader>
             <CardTitle>學習進度</CardTitle>
             <CardDescription>
-              測驗需 {data.level.questionCount} 題、{data.level.passScore} 分通過（Phase 5 推出）
+              測驗 {data.level.questionCount} 題、{data.level.passScore} 分通過，通過即解鎖下一關
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -246,6 +246,16 @@ export default function LevelDetailPage() {
               >
                 <Play className="h-4 w-4" aria-hidden="true" />
                 {startMutation.isPending ? '開始中…' : '開始學習'}
+              </Button>
+            )}
+            {data.status !== 'LOCKED' && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto gap-2"
+                onClick={() => router.push(`/dashboard/levels/${data.level.id}/test`)}
+              >
+                <Trophy className="h-4 w-4" aria-hidden="true" />
+                參加 Level 測驗
               </Button>
             )}
           </CardContent>
