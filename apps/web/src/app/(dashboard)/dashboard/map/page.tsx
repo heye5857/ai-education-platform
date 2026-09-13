@@ -59,6 +59,9 @@ export default function LearningMapPage() {
     queryKey: queryKeys.learning.map('me'),
     queryFn: () => api.get<MapData>('/api/learning/map'),
     retry: false,
+    // 解鎖狀態每次進地圖都重抓，避免考完回來看見舊的 Locked（全域 staleTime 5 分鐘太久）
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 
   const allLevels = React.useMemo(
