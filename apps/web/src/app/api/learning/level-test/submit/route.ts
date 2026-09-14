@@ -213,31 +213,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // KP 作答計數（分數公式 TBD-02，Phase 6 實作，此處只累計次數）
-    const kpDelta = new Map<string, { attempts: number; correct: number }>()
-    for (const g of graded) {
-      for (const kp of g.question.knowledgePoints) {
-        const cur = kpDelta.get(kp.knowledgePointId) ?? { attempts: 0, correct: 0 }
-        cur.attempts++
-        if (g.isCorrect) cur.correct++
-        kpDelta.set(kp.knowledgePointId, cur)
-      }
-    }
-    for (const [kpId, d] of kpDelta) {
+    // KP 作答計數先行寫入（Mastery 分數由事務外的 recompute 重算，避免長事務）
+    const kpIds = [...new Set(graded.flatMap((g) => g.question.knowledgePoints.map((k) => k.knowledgePointId)))]
+    for (const kpId of kpIds) {
       await tx.studentKnowledgePoint.upsert({
         where: { studentId_knowledgePointId: { studentId: student.id, knowledgePointId: kpId } },
-        create: {
-          studentId: student.id,
-          knowledgePointId: kpId,
-          attemptCount: d.attempts,
-          correctCount: d.correct,
-          lastAttemptAt: new Date(),
-        },
-        update: {
-          attemptCount: { increment: d.attempts },
-          correctCount: { increment: d.correct },
-          lastAttemptAt: new Date(),
-        },
+        create: { studentId: student.id, knowledgePointId: kpId },
+        update: {},
       })
     }
 
@@ -270,6 +252,17 @@ export async function POST(request: NextRequest) {
 
     return { attemptId: attempt.id, wrongCount };
   })
+
+  // Mastery 重算（TBD-02 綜合評分模型；best-effort，失敗不影響已寫入的成績）
+  try {
+    const { recomputeMasteryForQuestions } = await import('@/lib/mastery')
+    await recomputeMasteryForQuestions(
+      student.id,
+      graded.map((g) => g.questionId)
+    )
+  } catch (masteryError) {
+    console.error('Mastery recompute failed:', masteryError)
+  }
 
   // 下一關（通過才需要，但一併回傳方便 UI 導航）
   let nextLevelId: string | null = null
