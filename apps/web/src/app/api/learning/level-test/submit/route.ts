@@ -2,55 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { assessmentSubmitSchema } from '@/lib/validations/schemas'
-
-function normalizeAnswer(value: string): string {
-  return value.replace(/\s+/g, '').toLowerCase()
-}
-
-function parseIdSet(raw: string): string[] | null {
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return null
-    return parsed.filter((v): v is string => typeof v === 'string').sort()
-  } catch {
-    return null
-  }
-}
-
-function grade(
-  type: string,
-  studentAnswer: string,
-  correctAnswer: string
-): { isCorrect: boolean; gradable: boolean } {
-  switch (type) {
-    case 'SINGLE_CHOICE':
-      return { isCorrect: studentAnswer.trim() === correctAnswer.trim(), gradable: true }
-    case 'MULTIPLE_CHOICE': {
-      const a = parseIdSet(studentAnswer)
-      const b = parseIdSet(correctAnswer)
-      if (!a || !b) return { isCorrect: false, gradable: true }
-      return {
-        isCorrect: a.length === b.length && a.every((v, i) => v === b[i]),
-        gradable: true,
-      }
-    }
-    case 'FILL_BLANK':
-    case 'SHORT_ANSWER':
-      return {
-        isCorrect: normalizeAnswer(studentAnswer) === normalizeAnswer(correctAnswer),
-        gradable: true,
-      }
-    default:
-      // PROOF 等需人工批改的題型：先記錄作答，不自動判分（Phase 5+ 教師批改）
-      return { isCorrect: false, gradable: false }
-  }
-}
+import { gradeAnswer } from '@/lib/grading'
 
 /**
  * POST /api/learning/level-test/submit
  * 測驗評分：自動批改 → AssessmentAttempt + QuestionAttempt →
- * 錯題同步（WrongQuestion）→ KP 作答計數 → 通過則 COMPLETED 解鎖下一關
- * （Mastery 分數公式為 TBD-02，此處只更新 attempt/correct 計數）
+ * 錯題同步（WrongQuestion）→ Mastery 重算 → 通過則 COMPLETED 解鎖下一關
  */
 export async function POST(request: NextRequest) {
   const session = await auth()
@@ -140,7 +97,7 @@ export async function POST(request: NextRequest) {
 
   const graded = parsed.data.answers.map((a) => {
     const q = questionById.get(a.questionId)!
-    const { isCorrect, gradable } = grade(q.type, a.answer, q.answer)
+    const { isCorrect, gradable } = gradeAnswer(q.type, a.answer, q.answer)
     return { ...a, isCorrect, gradable, question: q }
   })
 

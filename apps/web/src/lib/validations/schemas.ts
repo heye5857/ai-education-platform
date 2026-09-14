@@ -108,6 +108,23 @@ export const wrongQuestionReviewSchema = z.object({
   reviewStatus: z.enum(['NEW', 'REVIEWING', 'MASTERED', 'ARCHIVED']),
 })
 
+export const wrongQuestionListQuerySchema = z.object({
+  status: z.enum(['NEW', 'REVIEWING', 'MASTERED', 'ARCHIVED']).optional(),
+  search: z.string().max(100).optional(),
+  sort: z.enum(['recent', 'errors', 'review']).default('recent'),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+})
+
+export const wrongQuestionAnswerSchema = z.object({
+  answer: z.string().max(2000, '回答不能超過 2000 個字元').default(''),
+  timeSpentSeconds: z.number().int().min(0).default(0),
+})
+
+export const wrongQuestionStatusSchema = z.object({
+  reviewStatus: z.enum(['REVIEWING', 'MASTERED', 'ARCHIVED']),
+})
+
 // Common validation helpers
 export const positiveIntSchema = z.number().int().positive('必須為正整數')
 export const nonNegativeIntSchema = z.number().int().min(0, '必須為非負整數')

@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { cardAnswerSchema } from '@/lib/validations/schemas'
-
-/** 答案正規化：去空白 + 小寫，比對時忽略格式差異 */
-function normalizeAnswer(value: string): string {
-  return value.replace(/\s+/g, '').toLowerCase()
-}
+import { gradeAnswer } from '@/lib/grading'
 
 /**
  * POST /api/learning/cards/answer { cardId, answer?, timeSpentSeconds? }
@@ -123,7 +119,7 @@ export async function POST(request: NextRequest) {
     )
   }
   const expected = typeof content.answer === 'string' ? content.answer : ''
-  const isCorrect = normalizeAnswer(answer) === normalizeAnswer(expected)
+  const { isCorrect } = gradeAnswer('SHORT_ANSWER', answer, expected)
 
   const result = await prisma.$transaction(async (tx) => {
     // 題目列：同一張卡片共用一題（tags.cardId），避免重複建題污染題庫
