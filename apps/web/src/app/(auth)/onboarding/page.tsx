@@ -25,10 +25,17 @@ function OnboardingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
-  const { update } = useSession()
+  const { status, update } = useSession()
 
   const [step, setStep] = React.useState(1)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?callbackUrl=/onboarding')
+    }
+  }, [status, router])
 
   const {
     register,
@@ -67,6 +74,7 @@ function OnboardingPageContent() {
 
   const onSubmit = async (data: OnboardingInput) => {
     setIsLoading(true)
+    setSubmitError(null)
     try {
       const res = await fetch('/api/onboarding', {
         method: 'POST',
@@ -75,7 +83,8 @@ function OnboardingPageContent() {
       })
 
       if (!res.ok) {
-        throw new Error('設定失敗')
+        const errorData = await res.json().catch(() => null)
+        throw new Error((errorData as { message?: string } | null)?.message ?? '設定失敗，請稍後再試')
       }
 
       await update()
@@ -83,6 +92,7 @@ function OnboardingPageContent() {
       router.refresh()
     } catch (err) {
       console.error('Onboarding failed:', err)
+      setSubmitError(err instanceof Error ? err.message : '設定失敗，請稍後再試')
     } finally {
       setIsLoading(false)
     }
@@ -113,6 +123,18 @@ function OnboardingPageContent() {
   ]
 
   const currentStep = steps[step - 1]
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-label="載入中">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-math-50 via-background to-primary/5 px-4 py-12">
@@ -324,6 +346,12 @@ function OnboardingPageContent() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {submitError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
               )}
 
               {/* Navigation Buttons */}
