@@ -1,41 +1,41 @@
-<# 
+<#
 .SYNOPSIS
-    AI Education Platform 開發環境一鍵啟動腳本
+    AI Education Platform - One Click Start Dev Environment
 .DESCRIPTION
-    自動啟動 Docker 服務、初始化資料庫、啟動 Next.js 開發伺服器
-    解決 Windows EPERM 錯誤、環境變數載入問題
+    Auto start Docker, init database, launch Next.js dev server
+    Fixes Windows EPERM error, env var loading issues
 #>
 
-Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║     AI Education Platform - 開發環境一鍵啟動                  ║" -ForegroundColor Green
-Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
+Write-Host "  AI Education Platform - One Click Start Dev Environment" -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
 Write-Host ""
 
-# 0. 清理殘留進程 (解決 EPERM)
-Write-Host "🧹 清理殘留 Node/Prisma 進程..." -ForegroundColor Cyan
+# 0. Clean up leftover processes (fix EPERM)
+Write-Host "`n[0/7] Cleaning up leftover Node/Prisma processes..." -ForegroundColor Cyan
 taskkill /F /IM node.exe 2>$null
 taskkill /F /IM "Prisma*" 2>$null
 Start-Sleep -Seconds 1
-Write-Host "✅ 清理完成" -ForegroundColor Green
+Write-Host "    Done" -ForegroundColor Green
 
-# 檢查 Docker 是否運行
-Write-Host "`n🔍 檢查 Docker 狀態..." -ForegroundColor Cyan
+# Check Docker
+Write-Host "`n[1/7] Checking Docker status..." -ForegroundColor Cyan
 try {
     docker version --format '{{.Server.Version}}' | Out-Null
-    Write-Host "✅ Docker 運行中" -ForegroundColor Green
+    Write-Host "    Docker is running" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Docker 未運行，請先啟動 Docker Desktop" -ForegroundColor Red
-    Write-Host "   請開啟 Docker Desktop 並等待啟動完成後再執行此腳本" -ForegroundColor Yellow
-    Read-Host "`n按 Enter 結束..."
+    Write-Host "    Docker not running. Please start Docker Desktop first." -ForegroundColor Red
+    Write-Host "    Open Docker Desktop and wait for it to start, then re-run this script." -ForegroundColor Yellow
+    Read-Host "`nPress Enter to exit..."
     exit 1
 }
 
-# 1. 啟動 Docker 服務
-Write-Host "`n📦 啟動 PostgreSQL & Redis..." -ForegroundColor Cyan
+# 1. Start Docker services
+Write-Host "`n[2/7] Starting PostgreSQL & Redis..." -ForegroundColor Cyan
 docker-compose up -d
 
-# 2. 等待資料庫就緒
-Write-Host "`n⏳ 等待資料庫就緒..." -ForegroundColor Yellow
+# 2. Wait for database ready
+Write-Host "`n[3/7] Waiting for database ready..." -ForegroundColor Yellow
 $maxAttempts = 30
 $attempt = 0
 $ready = $false
@@ -44,95 +44,98 @@ while ($attempt -lt $maxAttempts) {
     try {
         $result = docker-compose exec -T postgres pg_isready -U user -d ai_edu 2>$null
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ 資料庫就緒" -ForegroundColor Green
+            Write-Host "    Database ready" -ForegroundColor Green
             $ready = $true
             break
         }
     } catch {}
     $attempt++
-    Write-Host "   等待中... ($attempt/$maxAttempts)" -ForegroundColor Yellow
+    Write-Host "    Waiting... ($attempt/$maxAttempts)" -ForegroundColor Yellow
     Start-Sleep -Seconds 2
 }
 
 if (-not $ready) {
-    Write-Host "❌ 資料庫啟動逾時，請檢查 docker-compose logs postgres" -ForegroundColor Red
-    Read-Host "`n按 Enter 結束..."
+    Write-Host "    Database startup timeout. Check: docker-compose logs postgres" -ForegroundColor Red
+    Read-Host "`nPress Enter to exit..."
     exit 1
 }
 
-# 3. 檢查/建立環境變數檔案
-Write-Host "`n🔧 檢查環境變數..." -ForegroundColor Cyan
+# 3. Check/create env file
+Write-Host "`n[4/7] Checking environment variables..." -ForegroundColor Cyan
 $envPath = "apps/web/.env.local"
 if (-not (Test-Path $envPath)) {
-    Write-Host "⚠️  找不到 .env.local，正在從範例建立..." -ForegroundColor Yellow
+    Write-Host "    .env.local not found, creating from example..." -ForegroundColor Yellow
     Copy-Item "apps/web/.env.example" $envPath -Force
-    
-    # 產生 AUTH_SECRET
+
+    # Generate AUTH_SECRET
     $authSecret = [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
-    
-    # 更新 .env.local
+
+    # Update .env.local
     $content = Get-Content $envPath -Raw
     $content = $content -replace 'AUTH_SECRET="generate-with: openssl rand -base64 32"', "AUTH_SECRET=`"$authSecret`""
     $content = $content -replace 'DATABASE_URL="postgresql://user:password@localhost:5432/ai_edu\?schema=public"', 'DATABASE_URL="postgresql://user:password@localhost:5432/ai_edu?schema=public"'
     $content = $content -replace 'REDIS_URL="rediss://default:token@region.upstash.io:6379"', 'REDIS_URL="redis://localhost:6379"'
     Set-Content $envPath $content -Encoding UTF8
-    
-    Write-Host "✅ 已建立 .env.local 並產生 AUTH_SECRET" -ForegroundColor Green
-    Write-Host "`n⚠️  請編輯 apps/web/.env.local 填入 Google OAuth 憑證：" -ForegroundColor Yellow
-    Write-Host "   AUTH_GOOGLE_ID=您的 Google Client ID" -ForegroundColor Yellow
-    Write-Host "   AUTH_GOOGLE_SECRET=您的 Google Client Secret" -ForegroundColor Yellow
-    Write-Host "`n按 Enter 繼續..." -ForegroundColor Cyan
+
+    Write-Host "    Created .env.local with AUTH_SECRET" -ForegroundColor Green
+    Write-Host "`n    [ACTION REQUIRED] Edit apps/web/.env.local and add Google OAuth credentials:" -ForegroundColor Yellow
+    Write-Host "      AUTH_GOOGLE_ID=your-google-client-id" -ForegroundColor Yellow
+    Write-Host "      AUTH_GOOGLE_SECRET=your-google-client-secret" -ForegroundColor Yellow
+    Write-Host "`n    Press Enter to continue..." -ForegroundColor Cyan
     Read-Host | Out-Null
 } else {
-    Write-Host "✅ .env.local 已存在" -ForegroundColor Green
+    Write-Host "    .env.local exists" -ForegroundColor Green
 }
 
-# 4. 同步 .env 給 Prisma (packages/db 目錄)
-Write-Host "`n🔗 同步環境變數給 Prisma..." -ForegroundColor Cyan
+# 4. Sync .env to Prisma (packages/db)
+Write-Host "`n[5/7] Syncing env to Prisma..." -ForegroundColor Cyan
 Copy-Item "apps/web/.env.local" "packages/db/.env" -Force
-Write-Host "✅ 已複製 .env.local → packages/db/.env" -ForegroundColor Green
+Write-Host "    Copied .env.local to packages/db/.env" -ForegroundColor Green
 
-# 5. 安裝依賴 (若需要)
+# 5. Install deps if needed
 if (-not (Test-Path "node_modules")) {
-    Write-Host "`n📦 安裝依賴..." -ForegroundColor Cyan
+    Write-Host "`n[6/7] Installing dependencies..." -ForegroundColor Cyan
     pnpm install
-    Write-Host "✅ 依賴安裝完成" -ForegroundColor Green
+    Write-Host "    Dependencies installed" -ForegroundColor Green
+} else {
+    Write-Host "`n[6/7] Dependencies already installed, skipping" -ForegroundColor Green
 }
 
-# 6. 初始化資料庫
-Write-Host "`n🔧 初始化資料庫..." -ForegroundColor Cyan
-Write-Host "   產生 Prisma Client..." -ForegroundColor Cyan
+# 6. Init database
+Write-Host "`n[7/7] Initializing database..." -ForegroundColor Cyan
+Write-Host "    Generating Prisma Client..." -ForegroundColor Cyan
 pnpm db:generate
 
-Write-Host "   推送 Schema 到資料庫..." -ForegroundColor Cyan
+Write-Host "    Pushing schema to database..." -ForegroundColor Cyan
 pnpm db:push
 
-# 7. 填入種子資料 (可選)
+# 7. Seed (optional)
 if (Test-Path "apps/web/prisma/seed.ts") {
-    Write-Host "   填入種子資料..." -ForegroundColor Cyan
+    Write-Host "    Seeding database..." -ForegroundColor Cyan
     pnpm db:seed
 }
 
-# 8. 完成
-Write-Host "`n╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║  ✅ 開發環境就緒！                                            ║" -ForegroundColor Green
-Write-Host "╠══════════════════════════════════════════════════════════════╣" -ForegroundColor Green
-Write-Host "║  📋 下一步：                                                  ║" -ForegroundColor Green
-Write-Host "║  1. 編輯 apps/web/.env.local 填入 Google OAuth 憑證         ║" -ForegroundColor Green
-Write-Host "║  2. 選擇啟動方式：                                            ║" -ForegroundColor Green
-Write-Host "║     A) 此視窗直接啟動開發伺服器 (輸入 A)                    ║" -ForegroundColor Green
-Write-Host "║     B) 手動開新終端機執行 pnpm dev (輸入 B)                 ║" -ForegroundColor Green
-Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+# Done
+Write-Host "`n================================================================" -ForegroundColor Green
+Write-Host "  Dev environment ready!" -ForegroundColor Green
+Write-Host "================================================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Green
+Write-Host "  1. Edit apps/web/.env.local with Google OAuth credentials" -ForegroundColor Green
+Write-Host "  2. Choose how to start dev server:" -ForegroundColor Green
+Write-Host "     A) Start in this window (type A)" -ForegroundColor Green
+Write-Host "     B) Manual: open new terminal, run 'cd apps/web && pnpm dev' (type B)" -ForegroundColor Green
+Write-Host ""
 
-$choice = Read-Host "`n請選擇 (A/B) [預設 A]"
+$choice = Read-Host "`nChoose (A/B) [default A]"
 if ($choice -ne 'B') {
-    Write-Host "`n🚀 啟動開發伺服器..." -ForegroundColor Cyan
-    Write-Host "   訪問: http://localhost:3000/login" -ForegroundColor Yellow
-    Write-Host "   停止: Ctrl+C" -ForegroundColor Yellow
+    Write-Host "`nStarting dev server..." -ForegroundColor Cyan
+    Write-Host "  Visit: http://localhost:3000/login" -ForegroundColor Yellow
+    Write-Host "  Stop: Ctrl+C" -ForegroundColor Yellow
     Write-Host ""
     cd apps/web
     pnpm dev
 } else {
-    Write-Host "`n請在新終端機執行:`n  cd apps/web`n  pnpm dev" -ForegroundColor Cyan
-    Read-Host "`n按 Enter 結束..."
+    Write-Host "`nRun in new terminal:`n  cd apps/web`n  pnpm dev" -ForegroundColor Cyan
+    Read-Host "`nPress Enter to exit..."
 }
