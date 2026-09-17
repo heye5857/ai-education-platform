@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - heading "歡迎回來" [level=3] [ref=e11]
+        - paragraph [ref=e12]: 登入您的帳號以繼續學習
+      - generic [ref=e13]:
+        - button "使用 Google 登入" [ref=e14] [cursor=pointer]
+        - generic [ref=e20]: 或使用電子郵件登入
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - text: 電子郵件
+            - textbox "電子郵件" [ref=e32]:
+              - /placeholder: name@example.com
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - generic [ref=e35]: 密碼
+              - generic [ref=e36]: 忘記密碼？請用 Google 登入
+            - generic [ref=e37]:
+              - textbox "密碼" [ref=e42]:
+                - /placeholder: ••••••••
+              - button "顯示密碼" [ref=e43] [cursor=pointer]
+          - generic [ref=e48] [cursor=pointer]:
+            - checkbox "記住我" [ref=e49]
+            - generic [ref=e50]: 記住我
+          - button "登入" [ref=e51] [cursor=pointer]
+        - paragraph [ref=e52]:
+          - text: 還沒有帳號？
+          - link "立即註冊" [ref=e53] [cursor=pointer]:
+            - /url: /register
+    - generic [ref=e54]:
+      - paragraph [ref=e55]: 功能預覽：
+      - generic [ref=e56]:
+        - generic [ref=e57]: 學習地圖
+        - generic [ref=e58]: AI 問答
+        - generic [ref=e59]: 錯題本
+        - generic [ref=e60]: 學習分析
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e61]

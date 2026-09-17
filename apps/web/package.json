@@ -18,6 +18,7 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@ai-edu/logger": "workspace:*",
     "@auth/prisma-adapter": "^2.0.0",
     "@hookform/resolvers": "^3.3.0",
     "@prisma/client": "^5.10.0",

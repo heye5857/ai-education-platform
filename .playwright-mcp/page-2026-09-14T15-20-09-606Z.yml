@@ -1,0 +1,172 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e4]:
+      - generic [ref=f2e5]:
+        - generic [ref=f2e6]:
+          - link "AI Education Platform Home" [ref=f2e7] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f2e12]: AI 數學平台
+          - navigation "Main navigation" [ref=f2e13]:
+            - link "學習地圖" [ref=f2e14] [cursor=pointer]:
+              - /url: /dashboard
+            - link "AI 問答" [ref=f2e20] [cursor=pointer]:
+              - /url: /dashboard/chat
+            - link "學習分析" [ref=f2e23] [cursor=pointer]:
+              - /url: /dashboard/analysis
+        - button "張" [ref=f2e26] [cursor=pointer]
+    - generic [ref=f2e29]:
+      - complementary "Sidebar navigation" [ref=f2e30]:
+        - generic [ref=f2e31]:
+          - navigation "Main navigation" [ref=f2e32]:
+            - link "首頁" [ref=f2e33] [cursor=pointer]:
+              - /url: /dashboard
+            - link "學習地圖" [ref=f2e40] [cursor=pointer]:
+              - /url: /dashboard/map
+            - link "AI 問答" [ref=f2e45] [cursor=pointer]:
+              - /url: /dashboard/chat
+            - link "錯題本" [ref=f2e49] [cursor=pointer]:
+              - /url: /dashboard/wrong-questions
+            - link "學習分析" [ref=f2e53] [cursor=pointer]:
+              - /url: /dashboard/analysis
+            - link "成就" [ref=f2e56] [cursor=pointer]:
+              - /url: /dashboard/achievements
+            - link "設定" [ref=f2e64] [cursor=pointer]:
+              - /url: /dashboard/settings
+            - link "說明" [ref=f2e69] [cursor=pointer]:
+              - /url: /dashboard/help
+          - button "Collapse sidebar" [expanded] [ref=f2e75] [cursor=pointer]
+      - main [ref=f2e78]:
+        - generic [ref=f2e543]:
+          - button "回學習地圖" [ref=f2e544] [cursor=pointer]
+          - generic [ref=f2e547]:
+            - generic [ref=f2e548]:
+              - paragraph [ref=f2e549]: 國中數學 7年級上 / 整數與基本運算
+              - heading "Level 2：整數加減法" [level=1] [ref=f2e550]
+              - paragraph [ref=f2e551]: 【進階應用】整數加減法規則與數線操作
+            - generic [ref=f2e552]: 學習中
+          - region "教學影片" [ref=f2e555]:
+            - generic [ref=f2e557]:
+              - paragraph [ref=f2e562]: 教學影片製作中
+              - paragraph [ref=f2e563]: 內容團隊正在錄製本關影片，敬請期待
+          - region "學習進度" [ref=f2e564]:
+            - generic [ref=f2e565]:
+              - generic [ref=f2e566]:
+                - heading "學習進度" [level=3] [ref=f2e567]
+                - paragraph [ref=f2e568]: 測驗 10 題、70 分通過，通過即解鎖下一關
+              - generic [ref=f2e569]:
+                - generic [ref=f2e570]:
+                  - generic [ref=f2e571]:
+                    - generic [ref=f2e572]: 影片進度
+                    - generic [ref=f2e573]: 0%
+                  - progressbar [ref=f2e574]
+                - generic [ref=f2e576]:
+                  - generic [ref=f2e577]: 互動卡片 2 張
+                  - generic [ref=f2e578]: 測驗作答 0 次
+                - button "參加 Level 測驗" [ref=f2e582] [cursor=pointer]
+          - region "互動卡片" [ref=f2e589]:
+            - heading "互動卡片0/2 已完成" [level=2] [ref=f2e590]:
+              - text: 互動卡片
+              - generic [ref=f2e591]: 0/2 已完成
+            - generic [ref=f2e592]:
+              - generic [ref=f2e593]:
+                - generic [ref=f2e594]:
+                  - generic [ref=f2e595]:
+                    - generic [ref=f2e596]: 思考題
+                    - generic [ref=f2e599]: 影片 1:00 處
+                  - heading "想一想：負負得正是什麼意思？能用欠錢的例子說明嗎？" [level=3] [ref=f2e600]
+                - generic [ref=f2e601]:
+                  - textbox "寫下你的想法…" [ref=f2e603]
+                  - button "送出" [disabled]
+              - generic [ref=f2e604]:
+                - generic [ref=f2e605]:
+                  - generic [ref=f2e606]:
+                    - generic [ref=f2e607]: 小試身手
+                    - generic [ref=f2e610]: 影片 5:00 處
+                    - generic [ref=f2e611]: 必答
+                  - heading "請計算：(-2) + (-6) = ?" [level=3] [ref=f2e612]
+                - generic [ref=f2e613]:
+                  - textbox "請輸入答案…" [ref=f2e615]
+                  - button "送出答案" [disabled]
+          - navigation "關卡導航" [ref=f2e616]:
+            - button "← 上一關" [ref=f2e617] [cursor=pointer]
+            - button "下一關 →" [ref=f2e618] [cursor=pointer]
+    - contentinfo [ref=f2e475]:
+      - generic [ref=f2e476]:
+        - generic [ref=f2e477]:
+          - generic [ref=f2e478]:
+            - link "AI Education Platform Home" [ref=f2e479] [cursor=pointer]:
+              - /url: /
+              - generic [ref=f2e484]: AI 數學平台
+            - paragraph [ref=f2e485]: 以 AI 為核心的個人化數學教學平台，讓每個學生都能獲得專屬的學習體驗。
+            - generic [ref=f2e486]:
+              - link "GitHub" [ref=f2e487] [cursor=pointer]:
+                - /url: https://github.com
+              - link "Twitter" [ref=f2e491] [cursor=pointer]:
+                - /url: https://twitter.com
+              - link "Email" [ref=f2e494] [cursor=pointer]:
+                - /url: mailto:hello@example.com
+          - generic [ref=f2e498]:
+            - heading "產品" [level=3] [ref=f2e499]
+            - list [ref=f2e500]:
+              - listitem [ref=f2e501]:
+                - link "學習地圖" [ref=f2e502] [cursor=pointer]:
+                  - /url: /dashboard/map
+              - listitem [ref=f2e503]:
+                - link "AI 問答" [ref=f2e504] [cursor=pointer]:
+                  - /url: /dashboard/chat
+              - listitem [ref=f2e505]:
+                - link "錯題本" [ref=f2e506] [cursor=pointer]:
+                  - /url: /dashboard/wrong-questions
+              - listitem [ref=f2e507]:
+                - link "學習分析" [ref=f2e508] [cursor=pointer]:
+                  - /url: /dashboard/analysis
+          - generic [ref=f2e509]:
+            - heading "公司" [level=3] [ref=f2e510]
+            - list [ref=f2e511]:
+              - listitem [ref=f2e512]:
+                - link "關於我們" [ref=f2e513] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=f2e514]:
+                - link "部落格" [ref=f2e515] [cursor=pointer]:
+                  - /url: /blog
+              - listitem [ref=f2e516]:
+                - link "職缺" [ref=f2e517] [cursor=pointer]:
+                  - /url: /careers
+              - listitem [ref=f2e518]:
+                - link "新聞" [ref=f2e519] [cursor=pointer]:
+                  - /url: /press
+          - generic [ref=f2e520]:
+            - heading "支援" [level=3] [ref=f2e521]
+            - list [ref=f2e522]:
+              - listitem [ref=f2e523]:
+                - link "說明中心" [ref=f2e524] [cursor=pointer]:
+                  - /url: /help
+              - listitem [ref=f2e525]:
+                - link "聯絡我們" [ref=f2e526] [cursor=pointer]:
+                  - /url: /contact
+              - listitem [ref=f2e527]:
+                - link "隱私權政策" [ref=f2e528] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=f2e529]:
+                - link "服務條款" [ref=f2e530] [cursor=pointer]:
+                  - /url: /terms
+          - generic [ref=f2e531]:
+            - heading "法律" [level=3] [ref=f2e532]
+            - list [ref=f2e533]:
+              - listitem [ref=f2e534]:
+                - link "隱私權政策" [ref=f2e535] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=f2e536]:
+                - link "服務條款" [ref=f2e537] [cursor=pointer]:
+                  - /url: /terms
+              - listitem [ref=f2e538]:
+                - link "Cookie 政策" [ref=f2e539] [cursor=pointer]:
+                  - /url: /cookies
+        - paragraph [ref=f2e541]: © 2026 AI 數學平台. 保留所有權利。
+  - region "Notifications (F8)":
+    - list [ref=f2e623]:
+      - listitem [ref=f2e624]:
+        - button "Close" [ref=f2e628] [cursor=pointer]
+        - button [ref=f2e632] [cursor=pointer]
+  - alert [ref=f2e542]
+  - status [ref=f2e634]: Notification Action

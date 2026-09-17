@@ -2,6 +2,9 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/db'
+import { getLogger } from '@ai-edu/logger'
+
+const logger = getLogger('auth')
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -76,7 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      console.log('New user created:', user.id)
+      logger.info({ userId: user.id, email: user.email }, 'New user created')
     },
   },
   debug: process.env.NODE_ENV === 'development',

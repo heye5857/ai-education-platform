@@ -1,95 +1,66 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { studentProfileUpdateSchema } from '@/lib/validations/schemas'
+import { defineApiHandler, validateRequest, ApiError } from '@/lib/logger/api-handler'
 
 /**
  * GET /api/student/profile
  * 取得目前登入學生的個人資料
  */
-export async function GET() {
+export const GET = defineApiHandler(async (request, { logger }) => {
   const session = await auth()
 
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { code: 'UNAUTHORIZED', message: '請先登入' },
-      { status: 401 }
-    )
+    throw ApiError.unauthorized('請先登入')
   }
+
+  logger.debug({ userId: session.user.id }, 'Fetching student profile')
 
   const student = await prisma.student.findUnique({
     where: { userId: session.user.id },
   })
 
   if (!student) {
-    return NextResponse.json(
-      { code: 'STUDENT_NOT_FOUND', message: '尚未建立學生檔案，請先完成新手引導' },
-      { status: 404 }
-    )
+    throw ApiError.notFound('尚未建立學生檔案，請先完成新手引導')
   }
 
-  return NextResponse.json({ student }, { status: 200 })
-}
+  logger.info({ userId: session.user.id, studentId: student.id }, 'Student profile fetched')
+
+  return { student }
+}, 'student-profile')
 
 /**
  * PATCH /api/student/profile
  * 更新個人資料（部分欄位），並寫入 Audit Log
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = defineApiHandler(async (request, { logger }) => {
   const session = await auth()
 
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { code: 'UNAUTHORIZED', message: '請先登入' },
-      { status: 401 }
-    )
+    throw ApiError.unauthorized('請先登入')
   }
 
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json(
-      { code: 'INVALID_JSON', message: '請求格式錯誤' },
-      { status: 400 }
-    )
-  }
+  // 驗證請求 body
+  const body = await validateRequest(request, studentProfileUpdateSchema, logger)
 
-  const parsed = studentProfileUpdateSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        code: 'VALIDATION_ERROR',
-        message: '輸入資料驗證失敗',
-        details: parsed.error.flatten().fieldErrors,
-      },
-      { status: 400 }
-    )
-  }
-
-  if (Object.keys(parsed.data).length === 0) {
-    return NextResponse.json(
-      { code: 'EMPTY_UPDATE', message: '沒有提供要更新的欄位' },
-      { status: 400 }
-    )
+  if (Object.keys(body).length === 0) {
+    throw ApiError.badRequest('沒有提供要更新的欄位')
   }
 
   const userId = session.user.id
   const existing = await prisma.student.findUnique({ where: { userId } })
 
   if (!existing) {
-    return NextResponse.json(
-      { code: 'STUDENT_NOT_FOUND', message: '尚未建立學生檔案，請先完成新手引導' },
-      { status: 404 }
-    )
+    throw ApiError.notFound('尚未建立學生檔案，請先完成新手引導')
   }
 
-  // 計算實際變更（只記錄有差異的欄位，值皆為 JSON 安全的純量）
+  // 計算實際變更（只記錄有差異的欄位）
   const changes: Record<
     string,
     { before: string | number | null; after: string | number | null }
   > = {}
-  for (const [key, value] of Object.entries(parsed.data)) {
+  for (const [key, value] of Object.entries(body)) {
     const before = ((existing as unknown as Record<string, unknown>)[key] ?? null) as
       | string
       | number
@@ -100,48 +71,43 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  try {
-    const student = await prisma.student.update({
-      where: { userId },
-      data: {
-        ...parsed.data,
-        school: parsed.data.school ?? null,
-        className: parsed.data.className ?? null,
-      },
+  const student = await prisma.student.update({
+    where: { userId },
+    data: {
+      ...body,
+      school: body.school ?? null,
+      className: body.className ?? null,
+    },
+  })
+
+  // 同步 User 姓名
+  if (body.name && body.name !== session.user.name) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { name: body.name },
     })
-
-    // 同步 User 姓名
-    if (parsed.data.name && parsed.data.name !== session.user.name) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { name: parsed.data.name },
-      })
-    }
-
-    // 寫入 Audit Log（best-effort：失敗不影響主流程）
-    if (Object.keys(changes).length > 0) {
-      try {
-        await prisma.auditLog.create({
-          data: {
-            userId,
-            studentId: student.id,
-            action: 'student.profile.update',
-            entity: 'Student',
-            entityId: student.id,
-            changes,
-          },
-        })
-      } catch (auditError) {
-        console.error('Audit log write failed:', auditError)
-      }
-    }
-
-    return NextResponse.json({ student }, { status: 200 })
-  } catch (error) {
-    console.error('Student profile update failed:', error)
-    return NextResponse.json(
-      { code: 'INTERNAL_ERROR', message: '更新失敗，請稍後再試' },
-      { status: 500 }
-    )
   }
-}
+
+  // 寫入 Audit Log（best-effort：失敗不影響主流程）
+  if (Object.keys(changes).length > 0) {
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId,
+          studentId: student.id,
+          action: 'student.profile.update',
+          entity: 'Student',
+          entityId: student.id,
+          changes,
+        },
+      })
+      logger.info({ userId, studentId: student.id, changes }, 'Audit log created')
+    } catch (auditError) {
+      logger.warn({ error: auditError, userId, studentId: student.id }, 'Audit log write failed (non-blocking)')
+    }
+  }
+
+  logger.info({ userId, studentId: student.id, changes }, 'Student profile updated')
+
+  return { student }
+}, 'student-profile')

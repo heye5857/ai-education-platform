@@ -17,7 +17,13 @@
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"]
+      "@/lib/*": ["./src/lib/*"],
+      "@ai-edu/logger/*": ["../../packages/logger/src/*"],
+      "@ai-edu/db/*": ["../../packages/db/src/*"],
+      "@ai-edu/ai/*": ["../../packages/ai/src/*"],
+      "@ai-edu/rag/*": ["../../packages/rag/src/*"],
+      "@ai-edu/ui/*": ["../../packages/ui/src/*"],
+      "@ai-edu/config/*": ["../../packages/config/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
