@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "啟動開發環境",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/start-dev.ps1"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "一鍵啟動 Docker、資料庫初始化、開發伺服器"
+    },
+    {
+      "label": "啟動開發伺服器",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "dev", "--filter=web"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web"
+      },
+      "problemMatcher": [],
+      "group": "build",
+      "detail": "僅啟動 Next.js 開發伺服器 (需先完成環境設定)"
+    },
+    {
+      "label": "資料庫初始化",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "db:generate", "&&", "pnpm", "db:push"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "build",
+      "detail": "產生 Prisma Client 並推送 Schema"
+    },
+    {
+      "label": "開啟 Prisma Studio",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "db:studio"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web"
+      },
+      "problemMatcher": [],
+      "group": "build",
+      "detail": "開啟資料庫管理介面"
+    }
+  ]
+}

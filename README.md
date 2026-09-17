@@ -52,43 +52,65 @@ ai-education-platform/
 
 ## 🚀 快速開始
 
-### 前置需求
-- Node.js 20+
-- pnpm 9+
-- PostgreSQL 16+ (建議使用 [Neon](https://neon.tech) 或本地 Docker)
-- Redis (建議 [Upstash](https://upstash.com) 或本地 Docker)
+### 🆕 新電腦首次設定 (推薦：一鍵啟動)
 
-### 安裝與設定
+**前置需求：**
+- [Node.js 20+](https://nodejs.org/)
+- [pnpm 9+](https://pnpm.io/installation) (`npm install -g pnpm`)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (已安裝並**啟動**)
 
+**步驟 1：克隆專案**
 ```bash
-# 1. 克隆專案
 git clone https://github.com/heye5857/ai-education-platform.git
 cd ai-education-platform
+```
 
-# 2. 安裝依賴
+**步驟 2：一鍵啟動 (三種方式任選一)**
+
+| 方式 | 適用情境 |
+|------|----------|
+| **雙擊桌面捷徑** | 最簡單，已建立 `啟動 AI Education Platform.bat` 於桌面 |
+| **終端機執行 `.\start-dev.ps1`** | 專案根目錄下，完整互動式流程 |
+| **VS Code 任務** | `Ctrl+Shift+P` → `Tasks: Run Task` → `啟動開發環境` |
+
+> **腳本會自動完成：** Docker 啟動 → 等待資料庫 → 建立 `.env.local` (含 `AUTH_SECRET`) → 同步給 Prisma → `pnpm install` → `db:generate` → `db:push` → 詢問是否直接啟動 `pnpm dev`
+
+**步驟 3：設定 Google OAuth (必要)**
+啟動腳本完成後，**必須**編輯 `apps/web/.env.local` 填入：
+```env
+AUTH_GOOGLE_ID="你的 Google Client ID"
+AUTH_GOOGLE_SECRET="你的 Google Client Secret"
+```
+取得方式：[Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → 建立 OAuth 2.0 用戶端 ID → **授權重新導向 URI** 加入 `http://localhost:3000/api/auth/callback/google`
+
+**步驟 4：開啟瀏覽器**
+- 登入頁：http://localhost:3000/login
+- 首頁：http://localhost:3000
+
+---
+
+### 📋 手動步驟 (不使用一鍵腳本)
+
+```bash
+# 1. 安裝依賴
 pnpm install
+
+# 2. 啟動資料庫
+docker-compose up -d
 
 # 3. 設定環境變數
 cp apps/web/.env.example apps/web/.env.local
-# 編輯 .env.local 填入必要設定
+# 編輯 .env.local 填入 AUTH_SECRET、Google OAuth、REDIS_URL=redis://localhost:6379
 
-# 4. 設定資料庫
-pnpm --filter=@ai-edu/db db:generate
-pnpm --filter=@ai-edu/db db:push
+# 4. 同步環境變數給 Prisma
+cp apps/web/.env.local packages/db/.env
 
-# 5. 啟動開發伺服器
-pnpm dev
-```
+# 5. 初始化資料庫
+pnpm db:generate
+pnpm db:push
 
-### 環境變數必要項目
-
-```env
-# apps/web/.env.local
-DATABASE_URL="postgresql://user:pass@localhost:5432/ai_edu?schema=public"
-AUTH_SECRET="your-auth-secret-generate-with-openssl-rand-base64-32"
-AUTH_GOOGLE_ID="your-google-client-id"
-AUTH_GOOGLE_SECRET="your-google-client-secret"
-REDIS_URL="rediss://default:token@region.upstash.io:6379"
+# 6. 啟動開發伺服器
+cd apps/web && pnpm dev
 ```
 
 ## 📚 文檔導覽
